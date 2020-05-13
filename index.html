@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bubble Burst Game</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+
+<body>
+    <div class='front'>
+        <header>About the Game:</header>
+        <p> Fun Bubble Burst Game Using HTML Canvas in which bubble appear at random Places on the Screen.
+            <br> The main Aim of the Player is to Burst the Bubbles Before they fill up the Screen.
+        </p>
+        <h2 onclick=game.start()>Click to Start A new Game</h2>
+        <header>Instructions:</header>
+        <p> >Bubble will be Generated at Random places in the Screen.
+            <br> >Player has to click the Bubbles
+            <br> >Game will be Over once the Bubble Fill up Major part Of the Screen.
+        </p>
+        <h1>"ENJOY THE GAME!! HAVE FUN!!"</h1>
+    </div>
+    <div id="game">
+        <canvas></canvas>
+        <div class='timer'>
+            <span>Time</span>
+            <h2>00</h2>
+        </div>
+        <div class='buttons'>
+            <button onclick=game.pause()>Pause</button>
+            <button onclick=game.resume()>Resume</button>
+        </div>
+    </div>
+    <div class='score'>
+        <span>Your Score is </span>
+        <h4 onclick=restart()>RESTART</h4>
+    </div>
+
+
+</body>
+<script src="game.js"></script>
+
+</html>
