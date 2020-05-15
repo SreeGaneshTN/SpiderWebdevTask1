@@ -9,11 +9,19 @@ let ctx = canvas.getContext('2d');
 let rate = 150;
 let score = 0;
 const dx = 1,
-    dy = 1,
-    radius = 30;
+    dy = 1;
+let radius;
 let circlearray = [];
 let area = 0;
 let x, y, ss;
+
+let colors = [
+    '#23313d',
+    '#684674',
+    '#84254a',
+    '#ffffff',
+    '#fcd671'
+]
 var game = {
     start: function() {
         intro.style.display = 'none';
@@ -172,7 +180,7 @@ function distance(x1, y1, x2, y2) {
 
 }
 
-function circle(x, y, dx, dy, radius) {
+function circle(x, y, dx, dy, radius, color) {
     this.x = x;
     this.y = y;
     this.velocity = {
@@ -181,11 +189,12 @@ function circle(x, y, dx, dy, radius) {
     }
     this.mass = 1;
     this.radius = radius;
+    this.color = color;
 
     this.draw = function() {
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        ctx.fillStyle = 'black';
+        ctx.fillStyle = this.color;
         ctx.fill();
         ctx.closePath();
 
@@ -196,7 +205,7 @@ function circle(x, y, dx, dy, radius) {
         this.draw();
         for (let i = 0; i < circlearray.length; i++) {
             if (this === circlearray[i]) continue;
-            if (distance(this.x, this.y, circlearray[i].x, circlearray[i].y) - 2 * this.radius < 0) {
+            if (distance(this.x, this.y, circlearray[i].x, circlearray[i].y) - (this.radius + circlearray[i].radius) < 0) {
                 resolveCollision(this, circlearray[i]);
             }
         }
@@ -218,11 +227,13 @@ function updateGameArea() {
     game.frameNo += 1;
 
     if (game.frameNo == 1 || everyinterval(rate)) {
+        radius = Math.floor(Math.random() * 30 + 5);
         x = randomIntFromRange(radius, canvas.width - radius);
         y = randomIntFromRange(radius, canvas.height - radius);
         if (circlearray.length > 1) {
             for (let i = 0; i < circlearray.length; i++) {
-                if (distance(x, y, circlearray[i].x, circlearray[i].y) - 2 * radius < 0) {
+                if (distance(x, y, circlearray[i].x, circlearray[i].y) - (radius + circlearray[i].radius) < 0) {
+                    radius = Math.floor(Math.random() * 30 + 5);
                     x = randomIntFromRange(radius, canvas.width - radius);
                     y = randomIntFromRange(radius, canvas.height - radius);
                     i = -1;
@@ -230,8 +241,9 @@ function updateGameArea() {
 
             }
         }
+        idx = Math.floor(Math.random() * colors.length);
         area += (Math.PI * radius * radius);
-        circlearray.push(new circle(x, y, dx, dy, radius));
+        circlearray.push(new circle(x, y, dx, dy, radius, colors[idx]));
     }
     for (i = 0; i < circlearray.length; i += 1) {
         circlearray[i].update(circlearray);
@@ -244,7 +256,7 @@ window.addEventListener('click', function(e) {
     mouse.x = e.offsetX;
     mouse.y = e.offsetY;
     for (let i = 0; i < circlearray.length; i++) {
-        if (distance(mouse.x, mouse.y, circlearray[i].x, circlearray[i].y) - 2 * radius < 0) {
+        if (distance(mouse.x, mouse.y, circlearray[i].x, circlearray[i].y) - 2 * (circlearray[i].radius) < 0) {
             circlearray.splice(i, 1);
             area -= Math.PI * radius * radius;
             score++;
@@ -252,6 +264,17 @@ window.addEventListener('click', function(e) {
         }
     }
 })
+
+function gauntlet() {
+    console.log('clicked');
+    for (let i = 0; i < circlearray.length; i++) {
+        console.log('clicked');
+        circlearray.splice(i, 1);
+        area -= Math.PI * radius * radius;
+        if (i == (circlearray.length) / 2)
+            break;
+    }
+}
 
 function timer() {
     ss = setInterval(setsec, 1000);
