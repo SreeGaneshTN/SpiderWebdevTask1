@@ -37,6 +37,28 @@ h1 {
     padding-top: 40px;
 }
 
+section {
+    display: inline-block;
+    height: 134px;
+    padding: 0;
+    margin: 0;
+    vertical-align: top;
+    width: 104px;
+}
+
+#close-image img {
+    display: block;
+    height: 130px;
+    width: 100px;
+}
+
+#gauntlet {
+    background-image: url('gauntlet.jpg');
+    background-size: 90px 85px;
+    height: 90px;
+    width: 95px;
+}
+
 canvas {
     border: white 2px solid;
     margin-top: 110px;
