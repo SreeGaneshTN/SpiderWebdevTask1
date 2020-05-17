@@ -8,13 +8,16 @@ let sec = 0;
 let ctx = canvas.getContext('2d');
 let rate = 150;
 let score = 0;
-const dx = 1,
-    dy = 1;
+const dx = 0.5,
+    dy = 0.5;
 let radius;
 let circlearray = [];
 let area = 0;
 let x, y, ss;
-
+let gaunt = 3;
+let felix = 3;
+let hscore = [];
+localStorage.setItem('board', 0);
 let colors = [
     '#23313d',
     '#684674',
@@ -26,6 +29,7 @@ var game = {
     start: function() {
         intro.style.display = 'none';
         Game.style.visibility = 'visible';
+        bg();
         this.frameNo = 0;
         this.interval = setInterval(updateGameArea, 10);
         timer();
@@ -36,11 +40,13 @@ var game = {
     resume: function() {
         this.frameNo = 0;
         this.interval = setInterval(updateGameArea, 10);
+        BG.play();
         timer();
     },
     pause: function() {
         clearInterval(this.interval);
         clearInterval(ss);
+        BG.pause();
     },
     stop: function() {
         clearInterval(this.interval);
@@ -49,6 +55,8 @@ var game = {
         Game.style.visibility = 'hidden';
         document.querySelector('.score').style.display = 'block';
         document.querySelector('.score span').innerHTML += score;
+        document.querySelector('.scoreboard').style.display = 'block';
+        BG.pause();
     },
 
 }
@@ -58,8 +66,13 @@ function restart() {
     rate = 150;
     score = 0;
     area = 0;
+    gaunt = 3;
+    felix = 3;
     circlearray = [];
-    document.querySelector('.score span').innerHTML = 'Your Score is';
+    BG.load();
+    document.querySelector('.scoreboard').style.display = 'none';
+    document.querySelector('#highest').style.display = 'none';
+    document.querySelector('.score span').innerHTML = 'Your Score is ';
     document.querySelector('.score').style.display = 'none';
     game.start();
 }
@@ -180,7 +193,7 @@ function distance(x1, y1, x2, y2) {
 
 }
 
-function circle(x, y, dx, dy, radius, color) {
+function circle(x, y, dx, dy, radius, color, rock) {
     this.x = x;
     this.y = y;
     this.velocity = {
@@ -188,18 +201,49 @@ function circle(x, y, dx, dy, radius, color) {
         y: dy,
     }
     this.mass = 1;
+    this.rock = rock;
     this.radius = radius;
     this.color = color;
 
     this.draw = function() {
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        ctx.fillStyle = this.color;
-        ctx.fill();
-        ctx.closePath();
+        if (this.rock == false) {
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            ctx.fillStyle = this.color;
+            ctx.fill();
+            ctx.closePath();
+        } else {
+            //Rock Bubble Drawing like a Pie chart
+            var angles = [Math.PI * 0.3, Math.PI * 0.7, Math.PI * 0.2, Math.PI * 0.4, Math.PI * 0.4];
 
+            // Temporary variables, to store each arc angles
+            var beginAngle = 0;
+            var endAngle = 0;
+
+            // Iterate through the angles
+            for (var i = 0; i < angles.length; i = i + 1) {
+                // Begin where we left off
+                beginAngle = endAngle;
+                // End Angle
+                endAngle = endAngle + angles[i];
+
+                ctx.beginPath();
+                // Fill color
+                ctx.fillStyle = colors[i % colors.length];
+
+                // Same code as before
+                ctx.moveTo(this.x, this.y);
+                ctx.arc(this.x, this.y, this.radius, beginAngle, endAngle);
+                ctx.lineTo(this.x, this.y);
+                ctx.stroke();
+
+                // Fill
+                ctx.fill();
+            }
+        }
 
     }
+
 
     this.update = function(circlearray) {
         this.draw();
@@ -227,7 +271,7 @@ function updateGameArea() {
     game.frameNo += 1;
 
     if (game.frameNo == 1 || everyinterval(rate)) {
-        radius = Math.floor(Math.random() * 30 + 5);
+        radius = Math.floor(Math.random() * 30 + 10);
         x = randomIntFromRange(radius, canvas.width - radius);
         y = randomIntFromRange(radius, canvas.height - radius);
         if (circlearray.length > 1) {
@@ -243,42 +287,90 @@ function updateGameArea() {
         }
         idx = Math.floor(Math.random() * colors.length);
         area += (Math.PI * radius * radius);
-        circlearray.push(new circle(x, y, dx, dy, radius, colors[idx]));
+        if (score > 10 && score % 5 == 0) {
+            circlearray.push(new circle(x, y, dx, dy, radius, colors[idx], true));
+        } else {
+            circlearray.push(new circle(x, y, dx, dy, radius, colors[idx], false));
+        }
     }
     for (i = 0; i < circlearray.length; i += 1) {
         circlearray[i].update(circlearray);
     }
-    if (area >= (0.3 * canvas.height * canvas.width))
+    if (area >= (0.3 * canvas.height * canvas.width)) {
+        str = '' + score;
         game.stop();
+        hscore.push(parseInt(str));
+        localStorage.setItem('board', JSON.stringify(hscore));
+    }
 }
-
+let click = 0;
 window.addEventListener('click', function(e) {
+    if (BG.ended) {
+        BG.load();
+        BG.play();
+    }
+    click++;
     mouse.x = e.offsetX;
     mouse.y = e.offsetY;
     for (let i = 0; i < circlearray.length; i++) {
         if (distance(mouse.x, mouse.y, circlearray[i].x, circlearray[i].y) - 2 * (circlearray[i].radius) < 0) {
-            circlearray.splice(i, 1);
-            area -= Math.PI * radius * radius;
-            score++;
-            break;
+            if (circlearray[i].rock == true) {
+                if (click == 5) {
+                    circlearray.splice(i, 1);
+                    area -= Math.PI * radius * radius;
+                    score + 5;
+                    click = 0;
+                    break;
+                }
+            } else {
+                circlearray.splice(i, 1);
+                area -= Math.PI * radius * radius;
+                score++;
+                click = 0;
+                break;
+            }
         }
     }
 })
 
 function gauntlet() {
-    console.log('clicked');
-    for (let i = 0; i < circlearray.length; i++) {
-        console.log('clicked');
-        circlearray.splice(i, 1);
-        area -= Math.PI * radius * radius;
-        if (i == (circlearray.length) / 2)
-            break;
+    if (gaunt > 0) {
+        gaunt--;
+        for (let i = 0; i < circlearray.length; i++) {
+            circlearray.splice(i, 1);
+            area -= Math.PI * radius * radius;
+            if (i == (circlearray.length) / 2)
+                break;
+        }
+    } else {
+        alert('No More Gauntlet available');
     }
 }
+
+function Felix() {
+    felix--;
+    if (felix > 0) {
+        let t = 5;
+        var time = setInterval(function() {
+            t--;
+            rate = 300;
+            if (t < 0) {
+                clearInterval(time);
+                if (sec >= 20)
+                    rate = 50;
+                else
+                    rate = 150;
+            }
+        }, 1000)
+    } else
+        alert("No more Liquid Luck");
+}
+
 
 function timer() {
     ss = setInterval(setsec, 1000);
 }
+
 
 function setsec() {
     sec++;
@@ -290,4 +382,34 @@ function setsec() {
 function everyinterval(n) {
     if ((game.frameNo / n) % 1 == 0) { return true; }
     return false;
+}
+
+var aud = document.querySelector('.pop');
+var BG = document.querySelector('.bg');
+BG.volume = 0.5;
+
+function bg() {
+    BG.play();
+}
+
+
+let s = [];
+var child = document.querySelectorAll('li');
+
+function scoreB() {
+    let i = 0;
+    s = JSON.parse(localStorage.getItem('board'));
+    s.sort(function(a, b) { return b - a; });
+    document.getElementById('highest').style.display = 'block';
+    if (s.length <= 5) {
+        for (; i < s.length; i++) {
+            child[i].innerHTML = (i + 1) + '. ' + s[i];
+            child[i].style.borderBottom = '2px white dotted';
+        }
+    } else {
+        for (; i < 5; i++) {
+            child[i].innerHTML = (i + 1) + '. ' + s[i];
+            child[i].style.borderBottom = '2px white dotted';
+        }
+    }
 }
